@@ -1,0 +1,95 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("MONGODB_URI")
+}
+
+model Post {
+  id            String   @id @default(auto()) @map("_id") @db.ObjectId
+  slug          String   @unique
+  title         String
+  content       String
+  excerpt       String
+  metaTitle     String
+  metaDesc      String
+  featuredImage String?
+  category      String
+  tags          String[]
+  status        String   @default("draft") // draft | published
+  author        String   @default("Mike Johnson")
+  publishedAt   DateTime?
+  viewCount     Int      @default(0)
+  schemaJson    String?
+  createdAt     DateTime @default(now())
+
+  @@index([status, category])
+  @@index([slug])
+}
+
+model Keyword {
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  keyword    String   @unique
+  volume     Int
+  kd         Int
+  cpc        Float?
+  intent     String
+  city       String?
+  car        String?
+  difficulty String
+  createdAt  DateTime @default(now())
+
+  @@index([city, car])
+}
+
+model Affiliate {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  name      String
+  url       String
+  cloakSlug String   @unique
+  network   String
+  clicks    Int      @default(0)
+  revenue   Float    @default(0)
+  createdAt DateTime @default(now())
+}
+
+model Lead {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  name      String
+  email     String
+  company   String?
+  phone     String?
+  source    String
+  createdAt DateTime @default(now())
+
+  @@index([email])
+}
+
+model AiCache {
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  keyword    String
+  content    String
+  modelUsed  String
+  promptHash String
+  createdAt  DateTime @default(now())
+
+  @@index([keyword, promptHash])
+}
+
+model Settings {
+  id          String @id @default(auto()) @map("_id") @db.ObjectId
+  siteName    String @default("Mike's Auto Garage")
+  logo        String?
+  adsenseId   String?
+  analyticsId String?
+}
+
+model Admin {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  email     String   @unique
+  password  String
+  name      String
+  createdAt DateTime @default(now())
+}
