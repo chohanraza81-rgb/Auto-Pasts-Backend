@@ -35,16 +35,8 @@ async function callGemini(model: string, prompt: string): Promise<string> {
     throw new Error(`Gemini API ${res.status}: ${await res.text()}`);
   }
 
-  // Type the response properly
-  interface GeminiResponse {
-    candidates?: Array<{
-      content?: {
-        parts?: Array<{ text?: string }>;
-      };
-    }>;
-  }
-
-  const data = (await res.json()) as GeminiResponse;
+  // Cast to any to avoid TS errors with dynamic properties
+  const data: any = await res.json();
   const content = data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
   if (!content) throw new Error('Empty response from Gemini');
   return content;
@@ -111,4 +103,4 @@ TARGET: Pass Originality.ai < 1% AI, GPTZero < 2%`;
   }
 
   throw lastError || new Error('All Gemini models failed');
-      }
+}
