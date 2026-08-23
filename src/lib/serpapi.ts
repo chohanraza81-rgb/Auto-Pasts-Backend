@@ -13,7 +13,9 @@ export async function fetchPAA(keyword: string): Promise<string[]> {
 
     const res = await fetch(url.toString());
     if (!res.ok) throw new Error(`SerpApi ${res.status}`);
-    const data = await res.json();
+
+    // Cast to any to access dynamic properties
+    const data = (await res.json()) as any;
     const paa = data?.related_questions?.map((q: any) => q.question) || [];
     return paa.slice(0, 5);
   } catch (error) {
