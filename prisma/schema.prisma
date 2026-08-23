@@ -26,7 +26,6 @@ model Post {
   createdAt     DateTime @default(now())
 
   @@index([status, category])
-  @@index([slug])
 }
 
 model Keyword {
