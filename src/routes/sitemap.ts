@@ -8,9 +8,10 @@ router.get('/sitemap.xml', async (req: Request, res: Response) => {
     const xml = await generateSitemapXML();
     res.setHeader('Content-Type', 'application/xml');
     res.send(xml);
-  } catch (error) {
-    console.error('Sitemap error:', error);
-    res.status(500).send('Error generating sitemap');
+  } catch (error: any) {
+    console.error('Sitemap generation error:', error);
+    // Return the error message for debugging (remove in production)
+    res.status(500).send(`Error generating sitemap: ${error.message || error}`);
   }
 });
 
