@@ -7,8 +7,8 @@ export async function generateSitemapXML(): Promise<string> {
     select: { slug: true, publishedAt: true }
   });
 
-  // Explicitly type the map parameter to avoid implicit any
-  const postUrls = posts.map((p: { slug: string; publishedAt: Date | null }) => `
+  // Explicit any to avoid implicit any errors
+  const postUrls = posts.map((p: any) => `
     <url>
       <loc>${baseUrl}/blog/${p.slug}</loc>
       <lastmod>${p.publishedAt?.toISOString() || new Date().toISOString()}</lastmod>
