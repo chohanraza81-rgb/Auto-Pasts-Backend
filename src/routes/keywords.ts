@@ -36,7 +36,8 @@ router.post('/import', async (req: Request, res: Response) => {
   const lines = csv.split('\n').slice(1);
   const results = [];
   for (const line of lines) {
-    const [keyword, volume, kd, cpc, intent, city, car, difficulty] = line.split(',').map(s => s?.trim());
+    // Explicitly type the map parameter
+    const [keyword, volume, kd, cpc, intent, city, car, difficulty] = line.split(',').map((s: string) => s?.trim());
     if (keyword) {
       const kw = await prisma.keyword.upsert({
         where: { keyword },
