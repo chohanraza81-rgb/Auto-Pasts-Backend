@@ -27,10 +27,15 @@ router.get('/', async (req: Request, res: Response) => {
 // GET /api/leads/export
 router.get('/export', async (req: Request, res: Response) => {
   const leads = await prisma.lead.findMany({ orderBy: { createdAt: 'desc' } });
+
+  // Explicitly type the map parameter
   const csv = [
     'Name,Email,Company,Phone,Source,Date',
-    ...leads.map(l => `${l.name},${l.email},${l.company || ''},${l.phone || ''},${l.source},${l.createdAt.toISOString()}`)
+    ...leads.map((l: { name: string; email: string; company?: string; phone?: string; source: string; createdAt: Date }) =>
+      `${l.name},${l.email},${l.company || ''},${l.phone || ''},${l.source},${l.createdAt.toISOString()}`
+    )
   ].join('\n');
+
   res.setHeader('Content-Type', 'text/csv');
   res.setHeader('Content-Disposition', 'attachment; filename=leads.csv');
   res.send(csv);
