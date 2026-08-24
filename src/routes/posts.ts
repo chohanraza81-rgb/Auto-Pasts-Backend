@@ -12,12 +12,12 @@ const postSchema = z.object({
   excerpt: z.string().min(1),
   metaTitle: z.string().min(1),
   metaDesc: z.string().min(1),
-  featuredImage: z.string().optional(),
+  featuredImage: z.string().nullable().optional(),
   category: z.string().min(1),
   tags: z.array(z.string()).default([]),
   status: z.enum(['draft', 'published']).default('draft'),
-  publishedAt: z.string().optional(),
-  schemaJson: z.string().optional(),
+  publishedAt: z.string().nullable().optional(),
+  schemaJson: z.string().nullable().optional(),
   author: z.string().default('Mike Johnson')
 });
 
@@ -66,9 +66,16 @@ router.get('/:slug', async (req: Request, res: Response) => {
 // POST /api/posts
 router.post('/', async (req: Request, res: Response) => {
   const data = postSchema.parse(req.body);
+  // Convert null to undefined for Prisma (optional fields)
+  const prismaData = {
+    ...data,
+    publishedAt: data.publishedAt === null ? undefined : data.publishedAt,
+    schemaJson: data.schemaJson === null ? undefined : data.schemaJson,
+    featuredImage: data.featuredImage === null ? undefined : data.featuredImage,
+  };
   const post = await prisma.post.create({
     data: {
-      ...data,
+      ...prismaData,
       publishedAt: data.status === 'published' ? new Date() : null
     }
   });
@@ -80,7 +87,13 @@ router.post('/', async (req: Request, res: Response) => {
 router.put('/:id', async (req: Request, res: Response) => {
   const { id } = req.params;
   const data = postSchema.partial().parse(req.body);
-  const post = await prisma.post.update({ where: { id }, data });
+  const prismaData = {
+    ...data,
+    publishedAt: data.publishedAt === null ? undefined : data.publishedAt,
+    schemaJson: data.schemaJson === null ? undefined : data.schemaJson,
+    featuredImage: data.featuredImage === null ? undefined : data.featuredImage,
+  };
+  const post = await prisma.post.update({ where: { id }, data: prismaData });
   clearCache('posts:');
   clearCache(`post:${post.slug}`);
   res.json(post);
