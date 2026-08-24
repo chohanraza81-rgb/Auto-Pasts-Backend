@@ -15,7 +15,7 @@ import settingsRouter from './routes/settings';
 import robotsRouter from './routes/robots';
 import authRouter from './routes/auth';
 import categoriesRouter from './routes/categories';
-import contactRouter from './routes/contact';
+// import contactRouter from './routes/contact';  // <-- disabled for now
 
 dotenv.config();
 
@@ -28,7 +28,6 @@ app.use(cors({ origin: CORS_ORIGIN, credentials: true }));
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 
-// Trust proxy to fix express-rate-limit X-Forwarded-For warning on Railway
 app.set('trust proxy', 1);
 
 app.use('/api', apiLimiter);
@@ -44,7 +43,7 @@ app.use('/', robotsRouter);
 app.use('/api/settings', settingsRouter);
 app.use('/api/auth', authRouter);
 app.use('/api/categories', categoriesRouter);
-app.use('/api/contact', contactRouter);
+// app.use('/api/contact', contactRouter); // <-- disabled for now
 
 // Health check
 app.get('/health', (req, res) => res.json({ ok: true, uptime: process.uptime() }));
