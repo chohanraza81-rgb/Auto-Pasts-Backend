@@ -8,22 +8,27 @@ datasource db {
 }
 
 model Post {
-  id            String   @id @default(auto()) @map("_id") @db.ObjectId
-  slug          String   @unique
-  title         String
-  content       String
-  excerpt       String
-  metaTitle     String
-  metaDesc      String
-  featuredImage String?
-  category      String
-  tags          String[]
-  status        String   @default("draft") // draft | published
-  author        String   @default("Mike Johnson")
-  publishedAt   DateTime?
-  viewCount     Int      @default(0)
-  schemaJson    String?
-  createdAt     DateTime @default(now())
+  id               String   @id @default(auto()) @map("_id") @db.ObjectId
+  slug             String   @unique
+  title            String
+  content          String
+  excerpt          String
+  metaTitle        String
+  metaDesc         String
+  featuredImage    String?
+  featuredImageAlt String?
+  middleImage      String?
+  middleImageAlt   String?
+  finalImage       String?
+  finalImageAlt    String?
+  category         String
+  tags             String[]
+  status           String   @default("draft")
+  author           String   @default("Mike Johnson")
+  publishedAt      DateTime?
+  viewCount        Int      @default(0)
+  schemaJson       String?
+  createdAt        DateTime @default(now())
 
   @@index([status, category])
 }
