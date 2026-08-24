@@ -4,7 +4,6 @@ import helmet from 'helmet';
 import dotenv from 'dotenv';
 import { apiLimiter } from './middleware/rateLimit';
 import { errorHandler } from './middleware/error';
-import { prisma } from './lib/prisma';
 
 import postsRouter from './routes/posts';
 import keywordsRouter from './routes/keywords';
@@ -16,6 +15,7 @@ import settingsRouter from './routes/settings';
 import robotsRouter from './routes/robots';
 import authRouter from './routes/auth';
 import categoriesRouter from './routes/categories';
+import contactRouter from './routes/contact';
 
 dotenv.config();
 
@@ -44,6 +44,7 @@ app.use('/', robotsRouter);
 app.use('/api/settings', settingsRouter);
 app.use('/api/auth', authRouter);
 app.use('/api/categories', categoriesRouter);
+app.use('/api/contact', contactRouter);
 
 // Health check
 app.get('/health', (req, res) => res.json({ ok: true, uptime: process.uptime() }));
