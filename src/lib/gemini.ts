@@ -2,7 +2,16 @@ import { prisma } from './prisma';
 import crypto from 'crypto';
 import { setCache, getCache } from './cache';
 
-const MODELS = ['gemini-1.5-flash', 'gemini-1.5-flash-8b', 'gemini-2.0-flash-exp'];
+// Updated model list with latest free tier flash models
+const MODELS = [
+  'gemini-3.5-flash',
+  'gemini-3.5-flash-lite',
+  'gemini-2.5-flash',
+  'gemini-2.5-flash-lite',
+  'gemini-1.5-flash',
+  'gemini-1.5-flash-8b'
+];
+
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY!;
 const MAX_RETRIES_PER_MODEL = 2;
 
@@ -29,13 +38,17 @@ async function callGemini(model: string, prompt: string): Promise<string> {
   );
 
   if (!res.ok) {
+    const errorText = await res.text();
     if (res.status === 429) {
       throw new Error('RATE_LIMITED');
     }
-    throw new Error(`Gemini API ${res.status}: ${await res.text()}`);
+    // Treat 404 (model not found) as skip to next model
+    if (res.status === 404) {
+      throw new Error('MODEL_NOT_FOUND');
+    }
+    throw new Error(`Gemini API ${res.status}: ${errorText}`);
   }
 
-  // Cast to any to avoid TS errors with dynamic properties
   const data: any = await res.json();
   const content = data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
   if (!content) throw new Error('Empty response from Gemini');
@@ -97,7 +110,8 @@ TARGET: Pass Originality.ai < 1% AI, GPTZero < 2%`;
           await new Promise(r => setTimeout(r, 5000 * (attempt + 1)));
           continue;
         }
-        break; // non-rate-limit error, move to next model
+        // For MODEL_NOT_FOUND or other errors, break inner loop and try next model
+        break;
       }
     }
   }
