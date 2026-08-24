@@ -5,6 +5,7 @@ import { cache, clearCache } from '../lib/cache';
 
 const router = Router();
 
+// Schema for creating/updating posts
 const postSchema = z.object({
   slug: z.string().min(1),
   title: z.string().min(1),
@@ -66,19 +67,25 @@ router.get('/:slug', async (req: Request, res: Response) => {
 // POST /api/posts
 router.post('/', async (req: Request, res: Response) => {
   const data = postSchema.parse(req.body);
-  // Convert null to undefined for Prisma (optional fields)
-  const prismaData = {
+
+  // Convert null to undefined for Prisma optional fields
+  const prismaData: any = {
     ...data,
     publishedAt: data.publishedAt === null ? undefined : data.publishedAt,
     schemaJson: data.schemaJson === null ? undefined : data.schemaJson,
     featuredImage: data.featuredImage === null ? undefined : data.featuredImage,
   };
-  const post = await prisma.post.create({
-    data: {
-      ...prismaData,
-      publishedAt: data.status === 'published' ? new Date() : null
-    }
-  });
+
+  // If status is published and publishedAt not provided, set to now
+  if (data.status === 'published' && !prismaData.publishedAt) {
+    prismaData.publishedAt = new Date();
+  }
+  // If status is draft, ensure publishedAt is null/undefined
+  if (data.status === 'draft') {
+    prismaData.publishedAt = null;
+  }
+
+  const post = await prisma.post.create({ data: prismaData });
   clearCache('posts:');
   res.json(post);
 });
@@ -87,12 +94,21 @@ router.post('/', async (req: Request, res: Response) => {
 router.put('/:id', async (req: Request, res: Response) => {
   const { id } = req.params;
   const data = postSchema.partial().parse(req.body);
-  const prismaData = {
+
+  const prismaData: any = {
     ...data,
     publishedAt: data.publishedAt === null ? undefined : data.publishedAt,
     schemaJson: data.schemaJson === null ? undefined : data.schemaJson,
     featuredImage: data.featuredImage === null ? undefined : data.featuredImage,
   };
+
+  if (data.status === 'published' && !prismaData.publishedAt) {
+    prismaData.publishedAt = new Date();
+  }
+  if (data.status === 'draft') {
+    prismaData.publishedAt = null;
+  }
+
   const post = await prisma.post.update({ where: { id }, data: prismaData });
   clearCache('posts:');
   clearCache(`post:${post.slug}`);
