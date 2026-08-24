@@ -5,7 +5,6 @@ import { cache, clearCache } from '../lib/cache';
 
 const router = Router();
 
-// Schema for creating/updating posts
 const postSchema = z.object({
   slug: z.string().min(1),
   title: z.string().min(1),
@@ -14,6 +13,11 @@ const postSchema = z.object({
   metaTitle: z.string().min(1),
   metaDesc: z.string().min(1),
   featuredImage: z.string().nullable().optional(),
+  featuredImageAlt: z.string().nullable().optional(),
+  middleImage: z.string().nullable().optional(),
+  middleImageAlt: z.string().nullable().optional(),
+  finalImage: z.string().nullable().optional(),
+  finalImageAlt: z.string().nullable().optional(),
   category: z.string().min(1),
   tags: z.array(z.string()).default([]),
   status: z.enum(['draft', 'published']).default('draft'),
@@ -22,40 +26,26 @@ const postSchema = z.object({
   author: z.string().default('Mike Johnson')
 });
 
-// GET /api/posts?category=&status=
 router.get('/', async (req: Request, res: Response) => {
   const { category, status = 'published' } = req.query;
-
-  // Build where clause
   const where: any = {};
-  if (status !== 'all') {
-    where.status = status as string;
-  }
-  if (category && category !== 'all') {
-    where.category = category as string;
-  }
-
-  const cacheKey = `posts:${category || 'all'}:${status || 'all'}`;
+  if (status !== 'all') where.status = status;
+  if (category && category !== 'all') where.category = category;
+  const cacheKey = `posts:${category || 'all'}:${status}`;
   const cached = cache.get(cacheKey);
   if (cached) return res.json(cached);
 
   const posts = await prisma.post.findMany({
     where,
     select: {
-      id: true, // added for delete/edit
-      slug: true,
-      title: true,
-      excerpt: true,
-      featuredImage: true,
-      category: true,
-      tags: true,
-      publishedAt: true,
-      viewCount: true,
-      author: true,
-      metaTitle: true,
-      metaDesc: true,
-      createdAt: true,
-      status: true, // added for status display
+      id: true,
+      slug: true, title: true, excerpt: true, featuredImage: true,
+      featuredImageAlt: true,
+      middleImage: true, middleImageAlt: true,
+      finalImage: true, finalImageAlt: true,
+      category: true, tags: true, publishedAt: true, viewCount: true,
+      author: true, metaTitle: true, metaDesc: true, createdAt: true,
+      status: true
     },
     orderBy: { publishedAt: 'desc' }
   });
@@ -63,77 +53,63 @@ router.get('/', async (req: Request, res: Response) => {
   res.json(posts);
 });
 
-// GET /api/posts/:slug
 router.get('/:slug', async (req: Request, res: Response) => {
   const { slug } = req.params;
   const cacheKey = `post:${slug}`;
   const cached = cache.get(cacheKey);
   if (cached) {
-    // increment view count async
     prisma.post.update({ where: { slug }, data: { viewCount: { increment: 1 } } }).catch(() => {});
     return res.json(cached);
   }
-
   const post = await prisma.post.findUnique({ where: { slug } });
   if (!post) return res.status(404).json({ error: 'Post not found' });
   cache.set(cacheKey, post, 3600);
-  // increment view count async
   prisma.post.update({ where: { id: post.id }, data: { viewCount: { increment: 1 } } }).catch(() => {});
   res.json(post);
 });
 
-// POST /api/posts
 router.post('/', async (req: Request, res: Response) => {
   const data = postSchema.parse(req.body);
-
-  // Convert null to undefined for Prisma optional fields
   const prismaData: any = {
     ...data,
     publishedAt: data.publishedAt === null ? undefined : data.publishedAt,
     schemaJson: data.schemaJson === null ? undefined : data.schemaJson,
     featuredImage: data.featuredImage === null ? undefined : data.featuredImage,
+    featuredImageAlt: data.featuredImageAlt === null ? undefined : data.featuredImageAlt,
+    middleImage: data.middleImage === null ? undefined : data.middleImage,
+    middleImageAlt: data.middleImageAlt === null ? undefined : data.middleImageAlt,
+    finalImage: data.finalImage === null ? undefined : data.finalImage,
+    finalImageAlt: data.finalImageAlt === null ? undefined : data.finalImageAlt,
   };
-
-  // If status is published and publishedAt not provided, set to now
-  if (data.status === 'published' && !prismaData.publishedAt) {
-    prismaData.publishedAt = new Date();
-  }
-  // If status is draft, ensure publishedAt is null/undefined
-  if (data.status === 'draft') {
-    prismaData.publishedAt = null;
-  }
-
+  if (data.status === 'published' && !prismaData.publishedAt) prismaData.publishedAt = new Date();
+  if (data.status === 'draft') prismaData.publishedAt = null;
   const post = await prisma.post.create({ data: prismaData });
   clearCache('posts:');
   res.json(post);
 });
 
-// PUT /api/posts/:id
 router.put('/:id', async (req: Request, res: Response) => {
   const { id } = req.params;
   const data = postSchema.partial().parse(req.body);
-
   const prismaData: any = {
     ...data,
     publishedAt: data.publishedAt === null ? undefined : data.publishedAt,
     schemaJson: data.schemaJson === null ? undefined : data.schemaJson,
     featuredImage: data.featuredImage === null ? undefined : data.featuredImage,
+    featuredImageAlt: data.featuredImageAlt === null ? undefined : data.featuredImageAlt,
+    middleImage: data.middleImage === null ? undefined : data.middleImage,
+    middleImageAlt: data.middleImageAlt === null ? undefined : data.middleImageAlt,
+    finalImage: data.finalImage === null ? undefined : data.finalImage,
+    finalImageAlt: data.finalImageAlt === null ? undefined : data.finalImageAlt,
   };
-
-  if (data.status === 'published' && !prismaData.publishedAt) {
-    prismaData.publishedAt = new Date();
-  }
-  if (data.status === 'draft') {
-    prismaData.publishedAt = null;
-  }
-
+  if (data.status === 'published' && !prismaData.publishedAt) prismaData.publishedAt = new Date();
+  if (data.status === 'draft') prismaData.publishedAt = null;
   const post = await prisma.post.update({ where: { id }, data: prismaData });
   clearCache('posts:');
   clearCache(`post:${post.slug}`);
   res.json(post);
 });
 
-// DELETE /api/posts/:id
 router.delete('/:id', async (req: Request, res: Response) => {
   const post = await prisma.post.delete({ where: { id: req.params.id } });
   clearCache('posts:');
