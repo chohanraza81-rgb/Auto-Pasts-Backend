@@ -4,14 +4,17 @@ import { z } from 'zod';
 
 const router = Router();
 
+// GET /api/settings
 router.get('/', async (req: Request, res: Response) => {
   let settings = await prisma.settings.findFirst();
   if (!settings) {
-    settings = await prisma.settings.create({ data: { id: 'default' } });
+    // Let Prisma auto-generate the ObjectId
+    settings = await prisma.settings.create({ data: {} });
   }
   res.json(settings);
 });
 
+// PUT /api/settings
 router.put('/', async (req: Request, res: Response) => {
   const schema = z.object({
     siteName: z.string().optional(),
@@ -20,9 +23,10 @@ router.put('/', async (req: Request, res: Response) => {
     analyticsId: z.string().optional()
   });
   const data = schema.parse(req.body);
+
   let settings = await prisma.settings.findFirst();
   if (!settings) {
-    settings = await prisma.settings.create({ data: { id: 'default', ...data } });
+    settings = await prisma.settings.create({ data });
   } else {
     settings = await prisma.settings.update({
       where: { id: settings.id },
