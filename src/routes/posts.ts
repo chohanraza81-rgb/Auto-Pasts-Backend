@@ -25,12 +25,19 @@ const postSchema = z.object({
 // GET /api/posts?category=&status=
 router.get('/', async (req: Request, res: Response) => {
   const { category, status = 'published' } = req.query;
-  const cacheKey = `posts:${category || 'all'}:${status}`;
+
+  // Build where clause
+  const where: any = {};
+  if (status !== 'all') {
+    where.status = status as string;
+  }
+  if (category && category !== 'all') {
+    where.category = category as string;
+  }
+
+  const cacheKey = `posts:${category || 'all'}:${status || 'all'}`;
   const cached = cache.get(cacheKey);
   if (cached) return res.json(cached);
-
-  const where: any = { status: status as string };
-  if (category) where.category = category;
 
   const posts = await prisma.post.findMany({
     where,
