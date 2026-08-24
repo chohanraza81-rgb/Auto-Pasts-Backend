@@ -22,7 +22,7 @@ router.post('/', async (req: Request, res: Response) => {
   });
   const data = schema.parse(req.body);
   const aff = await prisma.affiliate.create({ data });
-  res.json(aff);
+  res.status(201).json(aff);
 });
 
 // GET /api/affiliates/go/:slug (redirect + track)
@@ -32,6 +32,13 @@ router.get('/go/:slug', async (req: Request, res: Response) => {
   if (!aff) return res.status(404).json({ error: 'Affiliate not found' });
   await prisma.affiliate.update({ where: { id: aff.id }, data: { clicks: { increment: 1 } } });
   res.redirect(301, aff.url);
+});
+
+// DELETE /api/affiliates/:id
+router.delete('/:id', async (req: Request, res: Response) => {
+  const { id } = req.params;
+  await prisma.affiliate.delete({ where: { id } });
+  res.json({ ok: true });
 });
 
 export default router;
